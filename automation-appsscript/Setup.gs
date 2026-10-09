@@ -74,6 +74,7 @@ function buildSetupSheet_() {
   kv('Gmail groups/aliases', '');
   kv('Vendor email domains', 'truecaller.com, airtel.com');
   kv('Gmail lookback months', 12);
+  kv('Backfill start date (YYYY-MM-DD, optional)', '');
   kv('Slack approved channels', 'C0C4X031MPX');
   kv('Slack include DMs with Vikram', 'false');
   blank();

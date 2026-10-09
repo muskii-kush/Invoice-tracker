@@ -21,8 +21,7 @@ function runBackfill() {
   if (!knownVendors.length) knownVendors = KNOWN_VENDORS;
   var domainVendorMap = knownVendorDomainsFromSheet_();
 
-  var afterDate = new Date();
-  afterDate.setMonth(afterDate.getMonth() - config.lookbackMonths);
+  var afterDate = resolveBackfillStartDate_(config);
 
   var report = { gmailScanned: 0, slackScanned: 0, likelyInvoice: 0, possibleInvoice: 0, needsReview: 0, duplicates: 0, newInvoices: 0 };
   var processedGmailIds = getProcessedGmailIds_();
@@ -85,4 +84,21 @@ function tallyResult_(report, result) {
 
 function slackTsToDate_(ts) {
   return new Date(Number(ts) * 1000);
+}
+
+/**
+ * "Backfill start date" in the Setup tab wins when set and valid (e.g.
+ * "2026-08-01") — an explicit date beats an approximate "N months back"
+ * calculation when someone actually means a specific date. Falls back to
+ * lookbackMonths if the field is blank or doesn't parse.
+ */
+function resolveBackfillStartDate_(config) {
+  if (config.backfillStartDate) {
+    var explicit = new Date(config.backfillStartDate + 'T00:00:00Z');
+    if (!isNaN(explicit)) return explicit;
+    Logger.log('Backfill start date "' + config.backfillStartDate + '" did not parse as YYYY-MM-DD — falling back to lookback months.');
+  }
+  var fallback = new Date();
+  fallback.setMonth(fallback.getMonth() - config.lookbackMonths);
+  return fallback;
 }

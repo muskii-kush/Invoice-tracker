@@ -103,6 +103,10 @@ function getConfig() {
     gmailGroupsAndAliases: readList('Gmail groups/aliases'),
     vendorDomains: readList('Vendor email domains'),
     lookbackMonths: Number(readValue('Gmail lookback months')) || 12,
+    // Explicit override, e.g. "2026-08-01" — takes priority over
+    // lookbackMonths when set, since "N months back" is only ever an
+    // approximation of a specific date someone actually means.
+    backfillStartDate: readValue('Backfill start date (YYYY-MM-DD, optional)'),
     slackApprovedChannels: readList('Slack approved channels'),
     slackIncludeDmsWithVikram: readValue('Slack include DMs with Vikram').toLowerCase() === 'true',
     slackToken: props.getProperty('SLACK_BOT_TOKEN'),
