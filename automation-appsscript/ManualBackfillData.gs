@@ -117,7 +117,9 @@ function importManualTrackerBackfill() {
   populateAmeyoLedger_();
   populateFromVendorSummaries_();
   populateUnvendoredReviewItem_();
-  SpreadsheetApp.getUi().alert('Manual-tracker backfill imported. Check the Review Queue tab for items needing verification.');
+  var msg = 'Manual-tracker backfill imported. Check the Review Queue tab for items needing verification.';
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { /* no UI when run from the script editor directly, or from a trigger */ }
 }
 
 function populateVendorReference_() {

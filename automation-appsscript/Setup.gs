@@ -38,8 +38,7 @@ function setupTracker() {
     }
   });
 
-  SpreadsheetApp.getUi().alert(
-    'Setup complete. Next steps:\n\n'
+  var setupMsg = 'Setup complete. Next steps:\n\n'
     + '1. Open the "Setup" tab and fill in Vikram\'s email, group/alias addresses, '
     + 'vendor domains, and approved Slack channels.\n'
     + '2. Run importManualTrackerBackfill() once to load the historical data from '
@@ -48,8 +47,9 @@ function setupTracker() {
     + '(key: SLACK_BOT_TOKEN).\n'
     + '4. Run runBackfill() for the live 12-month Gmail/Slack scan.\n'
     + '5. Set up a time-driven trigger for runSync() (Triggers menu, left sidebar) '
-    + 'for ongoing collection.'
-  );
+    + 'for ongoing collection.';
+  Logger.log(setupMsg);
+  try { SpreadsheetApp.getUi().alert(setupMsg); } catch (e) { /* no UI when run from the script editor directly, or from a trigger */ }
 }
 
 function buildSetupSheet_() {

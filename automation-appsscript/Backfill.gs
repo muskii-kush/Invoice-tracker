@@ -11,7 +11,9 @@
 function runBackfill() {
   var config = getConfig();
   if (!config.vikramEmail && !config.gmailGroupsAndAliases.length) {
-    SpreadsheetApp.getUi().alert('Fill in the Setup tab (Vikram email or at least one Gmail group/alias) before running backfill.');
+    var msg = 'Fill in the Setup tab (Vikram email or at least one Gmail group/alias) before running backfill.';
+    Logger.log(msg);
+    try { SpreadsheetApp.getUi().alert(msg); } catch (e) { /* no UI when run from the script editor directly, or from a trigger */ }
     return;
   }
 
@@ -54,16 +56,21 @@ function runBackfill() {
   PropertiesService.getScriptProperties().setProperty('SLACK_CURSORS', JSON.stringify(cursors));
 
   Logger.log(JSON.stringify(report, null, 2));
-  SpreadsheetApp.getUi().alert(
-    'Backfill complete.\n\n'
-    + 'Gmail messages scanned: ' + report.gmailScanned + '\n'
-    + 'Slack messages scanned: ' + report.slackScanned + '\n'
-    + 'New invoices created: ' + report.newInvoices + '\n'
-    + 'Duplicates linked: ' + report.duplicates + '\n'
-    + 'Sent to Review Queue: ' + report.needsReview + '\n\n'
-    + 'Check the Review Queue tab, then set up a time-driven trigger for runSync() '
-    + '(Triggers icon, left sidebar) for ongoing collection.'
-  );
+
+  var ui;
+  try { ui = SpreadsheetApp.getUi(); } catch (e) { ui = null; } // no UI when run from the script editor directly, or from a trigger
+  if (ui) {
+    ui.alert(
+      'Backfill complete.\n\n'
+      + 'Gmail messages scanned: ' + report.gmailScanned + '\n'
+      + 'Slack messages scanned: ' + report.slackScanned + '\n'
+      + 'New invoices created: ' + report.newInvoices + '\n'
+      + 'Duplicates linked: ' + report.duplicates + '\n'
+      + 'Sent to Review Queue: ' + report.needsReview + '\n\n'
+      + 'Check the Review Queue tab, then set up a time-driven trigger for runSync() '
+      + '(Triggers icon, left sidebar) for ongoing collection.'
+    );
+  }
 }
 
 function tallyResult_(report, result) {
