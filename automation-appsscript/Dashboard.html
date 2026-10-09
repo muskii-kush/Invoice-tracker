@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Automation Dashboard</title>
+<style>
+:root {
+  --blue:#4736FE; --blue-dark:#2B2098; --blue-light:#E3E1FF;
+  --mint:#63FFB1; --mint-dark:#20E2BF; --mint-soft:#E9FCF9;
+  --orange:#FF4F01; --black:#020618; --white:#FFFFFF;
+  --grey-50:#F5F7FB; --grey-100:#EAECF2; --grey-200:#D4D9E8;
+  --grey-500:#7B83A0; --grey-700:#3D4260;
+  --ink:#1A2238; --sub:#4D5876; --mut:#8390AA;
+  --green:#00B37E; --amber:#D97706; --red:#DC2626;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--grey-50);color:var(--ink);line-height:1.5;font-size:14px;}
+a{color:var(--blue);}
+
+/* HEADER */
+.main-header{background:linear-gradient(140deg,#080524 0%,#1a0e7a 45%,#3326c8 100%);padding:40px 40px 32px;color:#fff;}
+.report-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(99,255,177,.12);border:1px solid rgba(99,255,177,.28);border-radius:999px;padding:4px 14px;font-size:10.5px;font-weight:800;color:var(--mint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px;}
+.header-eyebrow{font-size:12px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.header-title{font-size:34px;font-weight:900;letter-spacing:-.04em;line-height:1.1;}
+.header-title .hi{color:var(--mint);}
+.header-meta{display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;}
+.meta-pill{font-size:11.5px;color:rgba(255,255,255,.55);}
+.meta-pill b{color:rgba(255,255,255,.9);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;margin-top:26px;}
+.stat-box{background:rgba(255,255,255,.04);padding:18px 20px;}
+.stat-box .sv{font-size:26px;font-weight:900;color:var(--mint);letter-spacing:-.02em;}
+.stat-box .sl{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+
+/* TABS */
+.tab-bar{position:sticky;top:0;z-index:110;background:#0d0830;display:flex;gap:0;padding:0 28px;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+.tab-btn{background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.55);font-family:inherit;font-size:13px;font-weight:800;letter-spacing:.02em;padding:16px 20px;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:rgba(255,255,255,.85);}
+.tab-btn.active{color:#fff;border-bottom-color:var(--mint);background:rgba(255,255,255,.04);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* LAYOUT */
+.content{max-width:1400px;margin:0 auto;padding:32px 28px 80px;}
+
+/* SECTION HEADERS */
+.sec-hdr{display:flex;align-items:center;gap:14px;margin:44px 0 20px;padding-bottom:14px;border-bottom:2px solid var(--grey-200);flex-wrap:wrap;}
+.sec-hdr:first-child{margin-top:0;}
+.sec-hdr.sh-mint{border-bottom-color:var(--mint-dark);}
+.sec-hdr.sh-blue{border-bottom-color:var(--blue);}
+.sec-hdr.sh-orange{border-bottom-color:var(--orange);}
+.sec-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.sh-mint .sec-num{background:var(--mint);color:var(--black);}
+.sh-blue .sec-num{background:var(--blue);color:#fff;}
+.sh-orange .sec-num{background:var(--orange);color:#fff;}
+.sec-hdr h2{font-size:20px;font-weight:800;letter-spacing:-.02em;}
+.sec-sub{font-size:12.5px;color:var(--sub);margin-left:auto;font-weight:500;}
+
+/* SEARCH BAR */
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--grey-200);border-radius:12px;padding:11px 16px;margin-bottom:18px;max-width:420px;}
+.search-bar input{border:none;outline:none;font-size:13.5px;width:100%;background:transparent;color:var(--ink);font-family:inherit;}
+.count-note{font-size:12px;color:var(--mut);margin-bottom:14px;font-weight:600;}
+
+/* TABLE */
+.matrix-wrap{overflow-x:auto;background:#fff;border:1px solid var(--grey-200);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);margin-bottom:28px;}
+table.matrix{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+table.matrix th{background:var(--grey-50);text-align:left;padding:12px 16px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);border-bottom:2px solid var(--grey-200);white-space:nowrap;position:sticky;top:0;}
+table.matrix td{padding:11px 16px;border-bottom:1px solid var(--grey-100);color:var(--ink);line-height:1.5;vertical-align:top;max-width:280px;}
+table.matrix tr:last-child td{border-bottom:none;}
+table.matrix tr:hover{background:var(--grey-50);}
+table.matrix td b{font-weight:700;}
+table.matrix td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+table.matrix td.nowrap{white-space:nowrap;}
+.cell-truncate{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;}
+.empty-note{padding:40px 20px;text-align:center;color:var(--mut);font-size:13px;}
+
+/* STATUS PILLS */
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.02em;white-space:nowrap;}
+
+/* BAR CHARTS */
+.chart-card{background:#fff;border:1px solid var(--grey-200);border-radius:14px;padding:20px 24px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.chart-card h3{font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:-.01em;}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-label{width:160px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;height:18px;background:var(--grey-100);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;transition:width .3s;}
+.bar-count{width:44px;text-align:right;flex-shrink:0;font-size:12.5px;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr;}}
+
+/* VENDOR CARDS */
+.pod-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pod-card{background:#fff;border-radius:16px;border:1px solid var(--grey-200);overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04);margin-bottom:16px;}
+.pch{padding:16px 22px 14px;border-bottom:1px solid var(--grey-100);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.pch .pname{font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:3px;}
+.pch .powns{font-size:11px;color:var(--mut);font-weight:600;}
+.pcb-body{padding:16px 22px 18px;}
+.pcb-row{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:8px;}
+.pcb-row b{color:var(--ink);}
+@media(max-width:900px){.pod-grid{grid-template-columns:1fr;}}
+
+/* REVIEW QUEUE CARDS */
+.gap-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;}
+.gap-card{background:#fff;border-radius:14px;border:1px solid var(--grey-200);padding:16px 20px;box-shadow:0 2px 8px rgba(0,0,0,.04);border-left:4px solid var(--grey-200);}
+.gap-card.st-red{border-left-color:var(--red);}
+.gap-card.st-amber{border-left-color:var(--amber);}
+.gap-card.st-green{border-left-color:var(--green);}
+.gap-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;}
+.gap-cat{font-size:13px;font-weight:800;color:var(--ink);}
+.gap-lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-top:8px;margin-bottom:2px;}
+.gap-card p.gval{font-size:12.5px;color:var(--sub);line-height:1.55;}
+@media(max-width:900px){.gap-grid{grid-template-columns:1fr;}}
+
+.footer{text-align:center;padding:28px;color:var(--mut);font-size:11.5px;border-top:1px solid var(--grey-200);margin-top:20px;}
+.loading{padding:60px;text-align:center;color:var(--mut);}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <div class="report-badge">● Live Tracker</div>
+  <div class="header-eyebrow">CARS24 — Technology Vendor Invoices</div>
+  <div class="header-title">Invoice <span class="hi">Command Center</span></div>
+  <div class="header-meta">
+    <span class="meta-pill">Data as of: <b id="metaGeneratedAt">—</b></span>
+    <span class="meta-pill">Source: <b>Gmail + Slack automated intake</b></span>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('overview', event)">📊 Overview</button>
+  <button class="tab-btn" onclick="showTab('invoices', event)">🧾 Invoice Register</button>
+  <button class="tab-btn" onclick="showTab('inbox', event)">📥 Source Inbox</button>
+  <button class="tab-btn" onclick="showTab('activity', event)">📝 Activity Log</button>
+  <button class="tab-btn" onclick="showTab('vendors', event)">🏢 Vendors</button>
+  <button class="tab-btn" onclick="showTab('review', event)">🔎 Review Queue</button>
+</div>
+
+<div class="content">
+
+  <!-- OVERVIEW -->
+  <div id="panel-overview" class="tab-panel active">
+    <div class="sec-hdr sh-mint" style="margin-top:0;">
+      <div class="sec-num">1</div>
+      <h2>Where Things Stand</h2>
+      <span class="sec-sub">Live breakdown across every tracked invoice</span>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Invoices by Intake Status</h3><div id="chartIntake"></div></div>
+      <div class="chart-card"><h3>Invoices by P2P Status</h3><div id="chartP2p"></div></div>
+    </div>
+    <div class="chart-card"><h3>Invoices by Vendor</h3><div id="chartVendor"></div></div>
+  </div>
+
+  <!-- INVOICE REGISTER -->
+  <div id="panel-invoices" class="tab-panel">
+    <div class="sec-hdr sh-blue" style="margin-top:0;">
+      <div class="sec-num">2</div>
+      <h2>Invoice Register</h2>
+      <span class="sec-sub">One row per unique invoice</span>
+    </div>
+    <div class="search-bar">
+      <span style="color:var(--blue);font-weight:800;">⌕</span>
+      <input type="text" id="searchInvoices" placeholder="Search vendor, invoice number, description...">
+    </div>
+    <div class="count-note" id="countInvoices"></div>
+    <div class="matrix-wrap"><div id="tableInvoices"></div></div>
+  </div>
+
+  <!-- SOURCE INBOX -->
+  <div id="panel-inbox" class="tab-panel">
+    <div class="sec-hdr sh-blue" style="margin-top:0;">
+      <div class="sec-num">3</div>
+      <h2>Source Inbox</h2>
+      <span class="sec-sub">Every scanned Gmail/Slack message, even non-invoices</span>
+    </div>
+    <div class="search-bar">
+      <span style="color:var(--blue);font-weight:800;">⌕</span>
+      <input type="text" id="searchInbox" placeholder="Search sender, subject, vendor...">
+    </div>
+    <div class="count-note" id="countInbox"></div>
+    <div class="matrix-wrap"><div id="tableInbox"></div></div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div id="panel-activity" class="tab-panel">
+    <div class="sec-hdr sh-blue" style="margin-top:0;">
+      <div class="sec-num">4</div>
+      <h2>Activity Log</h2>
+      <span class="sec-sub">Append-only history — nothing here is ever overwritten</span>
+    </div>
+    <div class="search-bar">
+      <span style="color:var(--blue);font-weight:800;">⌕</span>
+      <input type="text" id="searchActivity" placeholder="Search invoice ID, details...">
+    </div>
+    <div class="count-note" id="countActivity"></div>
+    <div class="matrix-wrap"><div id="tableActivity"></div></div>
+  </div>
+
+  <!-- VENDORS -->
+  <div id="panel-vendors" class="tab-panel">
+    <div class="sec-hdr sh-mint" style="margin-top:0;">
+      <div class="sec-num">5</div>
+      <h2>Vendor Reference</h2>
+      <span class="sec-sub">Known vendors and their approval matrices</span>
+    </div>
+    <div class="pod-grid" id="vendorGrid"></div>
+  </div>
+
+  <!-- REVIEW QUEUE -->
+  <div id="panel-review" class="tab-panel">
+    <div class="sec-hdr sh-orange" style="margin-top:0;">
+      <div class="sec-num">6</div>
+      <h2>Review Queue</h2>
+      <span class="sec-sub">Anything ambiguous lands here instead of being guessed</span>
+    </div>
+    <div class="gap-grid" id="reviewGrid"></div>
+  </div>
+
+</div>
+
+<div class="footer">Invoice Automation Dashboard &nbsp;·&nbsp; CARS24 Tech &amp; AI Strategy &nbsp;·&nbsp; Auto-generated from the live tracker sheet</div>
+
+<script>
+const DATA = <?!= dataJson ?>;
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showTab(name, evt) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- status colors ---------- */
+const INTAKE_COLORS = {
+  'New': { bg: '#E3E1FF', fg: '#2B2098' },
+  'Needs review': { bg: '#FEF3C7', fg: '#92400E' },
+  'Confirmed invoice': { bg: '#D1FAE5', fg: '#065F46' },
+  'Missing information': { bg: '#FDE2E7', fg: '#9F1239' },
+  'Duplicate': { bg: '#EAECF2', fg: '#3D4260' },
+  'Not an invoice': { bg: '#EAECF2', fg: '#3D4260' },
+  'Ready for P2P': { bg: '#E9FCF9', fg: '#065F46' },
+};
+const P2P_COLORS = {
+  'Not submitted': { bg: '#EAECF2', fg: '#3D4260' },
+  'Submitted to P2P': { bg: '#E3E1FF', fg: '#2B2098' },
+  'Validation issue': { bg: '#FDE2E7', fg: '#9F1239' },
+  'Approval pending': { bg: '#FEF3C7', fg: '#92400E' },
+  'Approved': { bg: '#E9FCF9', fg: '#065F46' },
+  'Processed': { bg: '#D1FAE5', fg: '#065F46' },
+  'Rejected': { bg: '#FDE2E7', fg: '#9F1239' },
+  'Paid': { bg: '#D1FAE5', fg: '#065F46' },
+};
+const DETECTION_COLORS = {
+  'Likely invoice': { bg: '#D1FAE5', fg: '#065F46' },
+  'Possible invoice': { bg: '#FEF3C7', fg: '#92400E' },
+  'Invoice follow-up': { bg: '#E3E1FF', fg: '#2B2098' },
+  'P2P or approval update': { bg: '#E3E1FF', fg: '#2B2098' },
+  'Duplicate source item': { bg: '#EAECF2', fg: '#3D4260' },
+  'Not an invoice': { bg: '#EAECF2', fg: '#3D4260' },
+  'Needs manual review': { bg: '#FDE2E7', fg: '#9F1239' },
+};
+function pill(value, colorMap) {
+  if (!value) return '';
+  const c = colorMap[value] || { bg: '#EAECF2', fg: '#3D4260' };
+  return '<span class="pill" style="background:' + c.bg + ';color:' + c.fg + ';">' + esc(value) + '</span>';
+}
+
+/* ---------- stats header ---------- */
+function renderStats() {
+  const inv = DATA.invoiceRegister;
+  const totalInvoices = inv.length;
+  const pending = inv.filter(function(r){ return r['P2P Status'] !== 'Paid' && r['P2P Status'] !== 'Rejected'; }).length;
+  const openReview = DATA.reviewQueue.filter(function(r){ return (r['Status'] || 'Open') === 'Open'; }).length;
+  const vendors = DATA.vendorReference.filter(function(r){ return (r['Active / Inactive'] || 'Active') !== 'Inactive'; }).length;
+
+  const stats = [
+    [totalInvoices, 'Total invoices tracked'],
+    [pending, 'Not yet paid/closed'],
+    [openReview, 'Open review items'],
+    [vendors, 'Active vendors'],
+  ];
+  document.getElementById('statsGrid').innerHTML = stats.map(function(s) {
+    return '<div class="stat-box"><div class="sv">' + s[0] + '</div><div class="sl">' + s[1] + '</div></div>';
+  }).join('');
+  document.getElementById('metaGeneratedAt').textContent = DATA.generatedAt;
+}
+
+/* ---------- overview charts ---------- */
+function groupCount(rows, field) {
+  const counts = {};
+  rows.forEach(function(r) {
+    const v = r[field] || '(blank)';
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  return Object.keys(counts).map(function(k){ return [k, counts[k]]; }).sort(function(a,b){ return b[1]-a[1]; });
+}
+function renderBarChart(containerId, pairs, colorFn) {
+  const max = Math.max.apply(null, pairs.map(function(p){ return p[1]; }).concat([1]));
+  document.getElementById(containerId).innerHTML = pairs.map(function(p) {
+    const pct = Math.round((p[1] / max) * 100);
+    const color = colorFn ? colorFn(p[0]) : 'var(--blue)';
+    return '<div class="bar-row">'
+      + '<div class="bar-label" title="' + esc(p[0]) + '">' + esc(p[0]) + '</div>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>'
+      + '<div class="bar-count">' + p[1] + '</div>'
+      + '</div>';
+  }).join('') || '<div class="empty-note">No data yet.</div>';
+}
+function renderOverviewCharts() {
+  renderBarChart('chartIntake', groupCount(DATA.invoiceRegister, 'Intake Status'), function(k) {
+    return (INTAKE_COLORS[k] || {}).fg ? (INTAKE_COLORS[k].bg === '#FDE2E7' ? 'var(--red)' : INTAKE_COLORS[k].bg === '#FEF3C7' ? 'var(--amber)' : INTAKE_COLORS[k].bg === '#D1FAE5' ? 'var(--green)' : 'var(--blue)') : 'var(--blue)';
+  });
+  renderBarChart('chartP2p', groupCount(DATA.invoiceRegister, 'P2P Status'), function(k) {
+    return (P2P_COLORS[k] || {}).bg === '#FDE2E7' ? 'var(--red)' : (P2P_COLORS[k] || {}).bg === '#FEF3C7' ? 'var(--amber)' : (P2P_COLORS[k] || {}).bg === '#D1FAE5' ? 'var(--green)' : 'var(--blue)';
+  });
+  const vendorPairs = groupCount(DATA.invoiceRegister, 'Vendor').slice(0, 12);
+  renderBarChart('chartVendor', vendorPairs, function() { return 'var(--blue)'; });
+}
+
+/* ---------- generic table renderer ---------- */
+function renderTable(containerId, rows, columns, formatters) {
+  if (!rows.length) {
+    document.getElementById(containerId).innerHTML = '<div class="empty-note">No rows yet.</div>';
+    return;
+  }
+  let html = '<table class="matrix"><tr>' + columns.map(function(c){ return '<th>' + esc(c.label) + '</th>'; }).join('') + '</tr>';
+  rows.forEach(function(row) {
+    html += '<tr>' + columns.map(function(c) {
+      const raw = row[c.key];
+      const content = (formatters && formatters[c.key]) ? formatters[c.key](raw, row) : esc(raw);
+      return '<td class="' + (c.cls || '') + '">' + content + '</td>';
+    }).join('') + '</tr>';
+  });
+  html += '</table>';
+  document.getElementById(containerId).innerHTML = html;
+}
+function linkCell(url, label) {
+  if (!url) return '';
+  return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(label || 'Open') + ' ↗</a>';
+}
+function truncCell(text) {
+  return '<span class="cell-truncate" title="' + esc(text) + '">' + esc(text) + '</span>';
+}
+
+/* ---------- Invoice Register ---------- */
+const INVOICE_COLUMNS = [
+  { key: 'Invoice ID', label: 'ID', cls: 'nowrap' },
+  { key: 'Vendor', label: 'Vendor', cls: 'nowrap' },
+  { key: 'Invoice Number', label: 'Invoice #', cls: 'nowrap' },
+  { key: 'Invoice Amount', label: 'Amount', cls: 'num' },
+  { key: 'Currency', label: 'Ccy', cls: 'nowrap' },
+  { key: 'Due Date', label: 'Due', cls: 'nowrap' },
+  { key: 'Intake Status', label: 'Intake Status' },
+  { key: 'P2P Status', label: 'P2P Status' },
+  { key: 'Current Issue', label: 'Current Issue' },
+  { key: 'Source Message Link', label: 'Source' },
+];
+const INVOICE_FORMATTERS = {
+  'Invoice Amount': function(v) { return v === '' || v === null || v === undefined ? '' : Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }); },
+  'Intake Status': function(v) { return pill(v, INTAKE_COLORS); },
+  'P2P Status': function(v) { return pill(v, P2P_COLORS); },
+  'Current Issue': function(v) { return truncCell(v); },
+  'Source Message Link': function(v) { return linkCell(v, 'View'); },
+};
+function invoiceMatches(row, q) {
+  if (!q) return true;
+  const hay = [row['Vendor'], row['Invoice Number'], row['Description'], row['PO Number'], row['PR Number'], row['Remarks']].join(' ').toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+function renderInvoices() {
+  const q = document.getElementById('searchInvoices').value.trim().toLowerCase();
+  const filtered = DATA.invoiceRegister.filter(function(r){ return invoiceMatches(r, q); });
+  document.getElementById('countInvoices').textContent = 'Showing ' + filtered.length + ' of ' + DATA.invoiceRegister.length + ' invoices';
+  renderTable('tableInvoices', filtered, INVOICE_COLUMNS, INVOICE_FORMATTERS);
+}
+
+/* ---------- Source Inbox ---------- */
+const INBOX_COLUMNS = [
+  { key: 'Source Record ID', label: 'ID', cls: 'nowrap' },
+  { key: 'Source', label: 'Source', cls: 'nowrap' },
+  { key: 'Received Date', label: 'Received', cls: 'nowrap' },
+  { key: 'Sender', label: 'Sender' },
+  { key: 'Subject or Message Preview', label: 'Subject / Preview' },
+  { key: 'Detected Vendor', label: 'Vendor', cls: 'nowrap' },
+  { key: 'Detection Status', label: 'Status' },
+  { key: 'Matched Invoice ID', label: 'Matched', cls: 'nowrap' },
+  { key: 'Original Message Link', label: 'Source' },
+];
+const INBOX_FORMATTERS = {
+  'Sender': function(v) { return truncCell(v); },
+  'Subject or Message Preview': function(v) { return truncCell(v); },
+  'Detection Status': function(v) { return pill(v, DETECTION_COLORS); },
+  'Original Message Link': function(v) { return linkCell(v, 'Open'); },
+};
+function inboxMatches(row, q) {
+  if (!q) return true;
+  const hay = [row['Sender'], row['Subject or Message Preview'], row['Detected Vendor'], row['Recipients or Channel']].join(' ').toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+function renderInbox() {
+  const q = document.getElementById('searchInbox').value.trim().toLowerCase();
+  const filtered = DATA.sourceInbox.filter(function(r){ return inboxMatches(r, q); });
+  document.getElementById('countInbox').textContent = 'Showing ' + filtered.length + ' of ' + DATA.sourceInbox.length + ' scanned messages';
+  renderTable('tableInbox', filtered, INBOX_COLUMNS, INBOX_FORMATTERS);
+}
+
+/* ---------- Activity Log ---------- */
+const ACTIVITY_COLUMNS = [
+  { key: 'Activity ID', label: 'ID', cls: 'nowrap' },
+  { key: 'Invoice ID', label: 'Invoice', cls: 'nowrap' },
+  { key: 'Activity Date', label: 'Date', cls: 'nowrap' },
+  { key: 'Source', label: 'Source', cls: 'nowrap' },
+  { key: 'Activity Type', label: 'Type', cls: 'nowrap' },
+  { key: 'Details', label: 'Details' },
+  { key: 'Outcome', label: 'Outcome' },
+];
+const ACTIVITY_FORMATTERS = { 'Details': function(v) { return truncCell(v); } };
+function activityMatches(row, q) {
+  if (!q) return true;
+  const hay = [row['Invoice ID'], row['Details'], row['Activity Type']].join(' ').toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+function renderActivity() {
+  const q = document.getElementById('searchActivity').value.trim().toLowerCase();
+  const filtered = DATA.activityLog.filter(function(r){ return activityMatches(r, q); }).slice().reverse();
+  document.getElementById('countActivity').textContent = 'Showing ' + filtered.length + ' of ' + DATA.activityLog.length + ' entries (newest first)';
+  renderTable('tableActivity', filtered, ACTIVITY_COLUMNS, ACTIVITY_FORMATTERS);
+}
+
+/* ---------- Vendor Reference ---------- */
+function renderVendors() {
+  const grid = document.getElementById('vendorGrid');
+  if (!DATA.vendorReference.length) {
+    grid.innerHTML = '<div class="empty-note">No vendors yet.</div>';
+    return;
+  }
+  grid.innerHTML = DATA.vendorReference.map(function(v) {
+    return '<div class="pod-card">'
+      + '<div class="pch"><div><div class="pname">' + esc(v['Vendor']) + '</div><div class="powns">' + esc(v['Service'] || '') + '</div></div></div>'
+      + '<div class="pcb-body">'
+      + (v['Vendor SPOC'] ? '<div class="pcb-row"><b>SPOC:</b> ' + esc(v['Vendor SPOC']) + '</div>' : '')
+      + (v['Business Units'] ? '<div class="pcb-row"><b>Business units:</b> ' + esc(v['Business Units']) + '</div>' : '')
+      + (v['PR / Direct PO Approval Matrix'] ? '<div class="pcb-row"><b>PR/PO approval:</b> ' + esc(v['PR / Direct PO Approval Matrix']) + '</div>' : '')
+      + (v['Invoice Approval Matrix'] ? '<div class="pcb-row"><b>Invoice approval:</b> ' + esc(v['Invoice Approval Matrix']) + '</div>' : '')
+      + (v['Matching Notes'] ? '<div class="pcb-row"><b>Notes:</b> ' + esc(v['Matching Notes']) + '</div>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+/* ---------- Review Queue ---------- */
+function renderReviewQueue() {
+  const grid = document.getElementById('reviewGrid');
+  if (!DATA.reviewQueue.length) {
+    grid.innerHTML = '<div class="empty-note">Nothing in the review queue. 🎉</div>';
+    return;
+  }
+  grid.innerHTML = DATA.reviewQueue.map(function(r) {
+    const status = r['Status'] || 'Open';
+    const cls = status === 'Open' ? 'st-amber' : 'st-green';
+    return '<div class="gap-card ' + cls + '">'
+      + '<div class="gap-top"><div class="gap-cat">' + esc(r['Suggested Vendor'] || '(vendor unclear)') + '</div>' + pill(status, {}) + '</div>'
+      + '<div class="gap-lbl">Reason for review</div><p class="gval">' + esc(r['Reason For Review']) + '</p>'
+      + (r['Suggested Invoice Number'] ? '<div class="gap-lbl">Suggested invoice #</div><p class="gval">' + esc(r['Suggested Invoice Number']) + '</p>' : '')
+      + (r['Original Message Link'] ? '<div class="gap-lbl">Source</div><p class="gval">' + linkCell(r['Original Message Link'], 'Open message') + '</p>' : '')
+      + '</div>';
+  }).join('');
+}
+
+/* ---------- wire up search inputs ---------- */
+document.getElementById('searchInvoices').addEventListener('input', renderInvoices);
+document.getElementById('searchInbox').addEventListener('input', renderInbox);
+document.getElementById('searchActivity').addEventListener('input', renderActivity);
+
+/* ---------- initial render ---------- */
+renderStats();
+renderOverviewCharts();
+renderInvoices();
+renderInbox();
+renderActivity();
+renderVendors();
+renderReviewQueue();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+# Source-discovery configuration — the "controlled list of Gmail addresses,
+# groups, aliases, channels, and people" the master prompt asks for.
+#
+# Fill in the blanks below with your real addresses/channels before running
+# backfill.py. Nothing here is contacted until you do — this file is just
+# config. Expand it any time a new vendor, alias, or channel is discovered;
+# you don't need to touch code for that.
+
+vikram:
+  email: ""              # e.g. vikram@cars24.com — required for "to:/cc: Vikram" search
+  aliases: []             # any secondary addresses Vikram uses
+
+gmail:
+  # Gmail groups/aliases used by technology, finance, procurement, IT, or AP teams.
+  groups_and_aliases:
+    - ""                 # e.g. finance@cars24.com
+    - ""                 # e.g. procurement@cars24.com
+    - ""                 # e.g. it-ops@cars24.com
+    - ""                 # e.g. accountspayable@cars24.com
+
+  # Email domains of known technology vendors (adds "from:@domain" to the search).
+  vendor_domains: []      # e.g. truecaller.com, airtel.com, ameyo.com
+
+  # How far back the historical backfill should search.
+  lookback_months: 12
+
+  # OAuth client + token file locations (see README for how to create these).
+  credentials_file: "credentials.json"
+  token_file: "token.json"
+
+slack:
+  workspace: ""           # workspace name, for your reference only
+
+  # Only these channels are searched — nothing else. Populate with channel
+  # IDs (Cxxxxxxxx) or names; the client resolves names to IDs at startup.
+  approved_channels: []   # e.g. tech-vendors, finance-ops, it-operations
+
+  # Direct-message and group-DM inclusion must be explicitly approved.
+  include_dms_with_vikram: false
+  include_group_dms: false
+  approved_dm_partners: []   # Slack user IDs explicitly approved for DM search
+
+  # Bot/user token (see README — needs channels:history, groups:history,
+  # im:history, mpim:history, users:read; read-only scopes only).
+  token_env_var: "SLACK_BOT_TOKEN"
+
+# Vendor list seeded from the existing manual tracker. Add new vendors here
+# as they're discovered (see also the "Vendor Reference" sheet in the workbook,
+# which is the source of truth once the tool is running — this file is the
+# bootstrap/default list).
+known_vendors:
+  - Truecaller
+  - Airtel
+  - Ameyo
+  - Veeno
+  - Ozonetel
+  - Exotel
+  - Nobroker
+  - Servetel
+  - Perfios
+  - Saleschat Pro
