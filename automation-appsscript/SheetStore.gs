@@ -144,3 +144,30 @@ function knownVendorsFromSheet_() {
   });
   return out;
 }
+
+/**
+ * Builds {domain: vendorName} from Vendor Reference's "Known Vendor Email
+ * Domain" column (comma-separated domains per row). Used so a sender
+ * domain that's already confirmed resolves to the exact vendor name
+ * instead of falling through to the lower-confidence domain-guess path.
+ */
+function knownVendorDomainsFromSheet_() {
+  var sheet = getSheet_('Vendor Reference');
+  var lastRow = sheet.getLastRow();
+  var map = {};
+  if (lastRow < 2) return map;
+  var headers = SHEET_SCHEMAS['Vendor Reference'];
+  var vendorIdx = headers.indexOf('Vendor');
+  var domainIdx = headers.indexOf('Known Vendor Email Domain');
+  var values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+  values.forEach(function (row) {
+    var vendor = row[vendorIdx];
+    var domains = row[domainIdx];
+    if (!vendor || !domains) return;
+    String(domains).split(',').forEach(function (d) {
+      d = d.trim().toLowerCase();
+      if (d) map[d] = vendor;
+    });
+  });
+  return map;
+}

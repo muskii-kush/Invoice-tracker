@@ -6,8 +6,9 @@
  */
 
 function processSourceItem_(opts) {
-  var signals = extractAll_(opts.bodyText, opts.attachmentNames, opts.knownVendors);
+  var signals = extractAll_(opts.bodyText, opts.attachmentNames, opts.knownVendors, opts.sender, opts.domainVendorMap);
   var cls = classify_(opts.bodyText, signals, opts.isThreadReply);
+  var vendorIsGuess = signals.vendorSource === 'guessed-domain';
 
   var sourceRecord = {
     'Source': opts.source, 'Source Type': opts.sourceType, 'Received Date': opts.receivedDate,
@@ -39,17 +40,21 @@ function processSourceItem_(opts) {
   }
 
   if (cls.category === 'Likely invoice' || cls.category === 'Possible invoice') {
+    var remarks = cls.reasons.join('; ');
+    if (vendorIsGuess) {
+      remarks += '; vendor name inferred from sender domain (' + signals.senderDomain + '), not yet confirmed in Vendor Reference';
+    }
     var invoiceId = appendRow_('Invoice Register', {
       'Vendor': signals.vendor || '', 'Invoice Number': signals.invoiceNumbers.join(', '),
-      'Invoice Amount': signals.amounts.length ? signals.amounts[0] : '', 'Currency': signals.currency || '',
-      'Due Date': signals.dates.length ? signals.dates[0] : '', 'Description': opts.subjectOrPreview,
+      'Invoice Date': signals.invoiceDate || '', 'Invoice Amount': signals.amounts.length ? signals.amounts[0] : '',
+      'Currency': signals.currency || '', 'Due Date': signals.dueDate || '', 'Description': opts.subjectOrPreview,
       'PO Number': signals.poNumbers.join(', '), 'PR Number': signals.prNumbers.join(', '),
-      'P2P / Aerchain Link': signals.p2pLinks.join(', '), 'Source Type': opts.source,
-      'Source Message ID': sourceId, 'Source Message Link': opts.originalLink || '',
+      'P2P / Aerchain Link': signals.p2pLinks.join(', '), 'Vendor SPOC': signals.senderName || '',
+      'Source Type': opts.source, 'Source Message ID': sourceId, 'Source Message Link': opts.originalLink || '',
       'Source Received Date': opts.receivedDate, 'Attachment Name': (opts.attachmentNames || []).join(', '),
-      'Detection Confidence': cls.confidence,
+      'Detection Confidence': vendorIsGuess ? 'Low' : cls.confidence,
       'Intake Status': cls.category === 'Likely invoice' ? 'New' : 'Needs review',
-      'P2P Status': 'Not submitted', 'Remarks': cls.reasons.join('; '),
+      'P2P Status': 'Not submitted', 'Remarks': remarks,
     });
     updateCell_('Source Inbox', sourceId, 'Matched Invoice ID', invoiceId);
     appendRow_('Activity Log', {
@@ -58,6 +63,16 @@ function processSourceItem_(opts) {
       'Details': 'Created from ' + sourceId + ' (' + cls.category + ', confidence ' + cls.confidence + ')',
       'Outcome': 'New invoice record created', 'Source Link': opts.originalLink || '',
     });
+    if (vendorIsGuess) {
+      appendRow_('Review Queue', {
+        'Linked Source Record ID': sourceId, 'Linked Invoice ID': invoiceId,
+        'Reason For Review': 'New vendor candidate "' + signals.vendor + '" inferred from sender domain "'
+          + signals.senderDomain + '" — not in Vendor Reference yet. Confirm and add it there (with this domain '
+          + 'under "Known Vendor Email Domain") if correct, so future emails from this domain resolve with full confidence.',
+        'Detected Signals': 'sender domain: ' + signals.senderDomain, 'Suggested Vendor': signals.vendor,
+        'Status': 'Open', 'Original Message Link': opts.originalLink || '',
+      });
+    }
     result.newInvoiceId = invoiceId;
     return result;
   }

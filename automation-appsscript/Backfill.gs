@@ -19,6 +19,7 @@ function runBackfill() {
 
   var knownVendors = knownVendorsFromSheet_();
   if (!knownVendors.length) knownVendors = KNOWN_VENDORS;
+  var domainVendorMap = knownVendorDomainsFromSheet_();
 
   var afterDate = new Date();
   afterDate.setMonth(afterDate.getMonth() - config.lookbackMonths);
@@ -32,6 +33,7 @@ function runBackfill() {
       recipientsOrChannel: msg.recipients, subjectOrPreview: msg.subject,
       bodyText: msg.subject + '\n' + msg.bodyText + '\n' + msg.attachmentText, attachmentNames: msg.attachmentNames,
       originalLink: msg.permalink, isThreadReply: msg.isThreadReply, knownVendors: knownVendors,
+      domainVendorMap: domainVendorMap,
     });
     tallyResult_(report, result);
   });
@@ -47,7 +49,7 @@ function runBackfill() {
       source: 'Slack', sourceType: sourceTag, receivedDate: slackTsToDate_(msg.ts), sender: msg.user,
       recipientsOrChannel: sourceTag, subjectOrPreview: msg.text.slice(0, 140), bodyText: msg.text,
       attachmentNames: msg.files, originalLink: msg.permalink, isThreadReply: msg.isThreadReply,
-      knownVendors: knownVendors,
+      knownVendors: knownVendors, domainVendorMap: domainVendorMap,
     });
     tallyResult_(report, result);
   }, slackLookbackTs);
