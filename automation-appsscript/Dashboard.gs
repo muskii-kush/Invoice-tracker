@@ -8,13 +8,13 @@
  * > pencil icon > Version: New version > Deploy instead.
  */
 function doGet(e) {
+  // Simplified dashboard only needs these two — Source Inbox (1000+ rows),
+  // Vendor Reference, and Review Queue aren't rendered as their own tabs
+  // anymore, so there's no point paying to fetch/serialize them here.
   var data = {
     generatedAt: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, HH:mm'),
     invoiceRegister: readSheetAsObjects_('Invoice Register'),
-    sourceInbox: readSheetAsObjects_('Source Inbox'),
     activityLog: readSheetAsObjects_('Activity Log'),
-    vendorReference: readSheetAsObjects_('Vendor Reference'),
-    reviewQueue: readSheetAsObjects_('Review Queue'),
   };
 
   var template = HtmlService.createTemplateFromFile('Dashboard');
