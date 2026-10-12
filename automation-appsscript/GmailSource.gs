@@ -60,6 +60,50 @@ function scanGmailQuery_(query, maxThreads) {
  * the master prompt's "don't download/duplicate attachments unless
  * required" rule.
  */
+/**
+ * A reply's raw body includes the entire quoted history below it ("On ...
+ * wrote:", "-----Original Message-----", etc.) — strip that off so
+ * "current status" is just the new content someone actually typed, not
+ * the whole thread concatenated.
+ */
+function extractLatestReplySnippet_(bodyText) {
+  var text = bodyText || '';
+  var cutMarkers = [/\n\s*On .+wrote:/i, /\n-{2,}\s*Original Message\s*-{2,}/i, /\n\s*From:\s/i, /\n\s*>/];
+  var cutIndex = text.length;
+  cutMarkers.forEach(function (re) {
+    var m = text.match(re);
+    if (m && m.index < cutIndex) cutIndex = m.index;
+  });
+  var snippet = text.slice(0, cutIndex).trim();
+  return snippet.length > 400 ? snippet.slice(0, 400) + '…' : snippet;
+}
+
+/**
+ * The message a search query matched may not be the newest one in its
+ * thread — someone could have replied since. Fetch the thread's actual
+ * last message so "current status" reflects the latest word, not
+ * whichever message happened to match the search.
+ */
+function getLatestThreadInfo_(thread, fallbackMsg) {
+  try {
+    var messages = thread.getMessages();
+    var last = messages[messages.length - 1];
+    return {
+      snippet: extractLatestReplySnippet_(last.getPlainBody()),
+      date: last.getDate(),
+      sender: last.getFrom() || '',
+      permalink: 'https://mail.google.com/mail/u/0/#all/' + last.getId(),
+    };
+  } catch (e) {
+    return {
+      snippet: extractLatestReplySnippet_(fallbackMsg.getPlainBody()),
+      date: fallbackMsg.getDate(),
+      sender: fallbackMsg.getFrom() || '',
+      permalink: 'https://mail.google.com/mail/u/0/#all/' + fallbackMsg.getId(),
+    };
+  }
+}
+
 function normalizeGmailMessage_(msg) {
   var attachmentNames = [];
   var attachmentText = '';
@@ -72,6 +116,7 @@ function normalizeGmailMessage_(msg) {
   }
   var thread = msg.getThread();
   var firstId = thread.getMessages()[0].getId();
+  var latestThread = getLatestThreadInfo_(thread, msg);
 
   return {
     id: msg.getId(),
@@ -84,6 +129,10 @@ function normalizeGmailMessage_(msg) {
     attachmentText: attachmentText,
     permalink: 'https://mail.google.com/mail/u/0/#all/' + msg.getId(),
     isThreadReply: thread.getMessageCount() > 1 && firstId !== msg.getId(),
+    latestThreadSnippet: latestThread.snippet,
+    latestThreadDate: latestThread.date,
+    latestThreadSender: latestThread.sender,
+    latestThreadPermalink: latestThread.permalink,
   };
 }
 

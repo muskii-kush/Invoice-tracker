@@ -33,6 +33,7 @@ function runBackfill() {
       bodyText: msg.subject + '\n' + msg.bodyText + '\n' + msg.attachmentText, attachmentNames: msg.attachmentNames,
       originalLink: msg.permalink, isThreadReply: msg.isThreadReply, knownVendors: knownVendors,
       domainVendorMap: domainVendorMap,
+      latestThreadSnippet: msg.latestThreadSnippet, latestThreadDate: msg.latestThreadDate,
     });
     tallyResult_(report, result);
   });

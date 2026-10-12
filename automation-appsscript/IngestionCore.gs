@@ -10,6 +10,18 @@ function processSourceItem_(opts) {
   var cls = classify_(opts.bodyText, signals, opts.isThreadReply);
   var vendorIsGuess = signals.vendorSource === 'guessed-domain';
 
+  // Gmail only (Slack doesn't carry a "latest thread reply" snippet here) --
+  // keeps the comprehensive tracker's Current Status current whenever the
+  // follow-up conversation happens over email, independent of whatever
+  // Invoice Register does below.
+  if (opts.source === 'Gmail' && (cls.category === 'Likely invoice' || cls.category === 'Possible invoice')) {
+    try {
+      syncToMonthOnMonthTracker_(signals, opts);
+    } catch (e) {
+      Logger.log('Month-on-Month sync failed (continuing): ' + e.message);
+    }
+  }
+
   var sourceRecord = {
     'Source': opts.source, 'Source Type': opts.sourceType, 'Received Date': opts.receivedDate,
     'Sender': opts.sender, 'Recipients or Channel': opts.recipientsOrChannel,

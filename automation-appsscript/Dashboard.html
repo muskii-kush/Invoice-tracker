@@ -230,12 +230,32 @@ function monthKey(dateStr) {
   const m = String(dateStr || '').match(/^(\d{4})-(\d{2})/);
   return m ? m[1] + '-' + m[2] : null;
 }
-function populateMonthFilter(selectId, rows, dateField) {
+/**
+ * One shared month list built from every date field across BOTH sheets —
+ * not just whichever field happens to back the current tab. Without this,
+ * the Status Board/Full Details filters (driven by Month-on-Month's
+ * "Month cosumption", which so far only has Aug/Jul 2026 rows) would
+ * never offer Sep/Oct even though the underlying Excel data clearly spans
+ * through Oct 2026 in the All Pendency log. Same unified list powers all
+ * three dropdowns, so selecting a month with no Month-on-Month rows yet
+ * correctly shows "0 of N" there rather than the option not existing.
+ */
+function buildUnifiedMonths_() {
   const months = {};
-  rows.forEach(function(r) {
-    const k = monthKey(r[dateField]);
-    if (k) months[k] = monthLabel(r[dateField]);
-  });
+  function collect(rows, field) {
+    rows.forEach(function(r) {
+      const k = monthKey(r[field]);
+      if (k) months[k] = monthLabel(r[field]);
+    });
+  }
+  collect(MOM, 'Month cosumption');
+  collect(MOM, 'Invoice Date');
+  collect(MOM, 'Billing Due Date');
+  collect(PEND, 'Invoice Date');
+  return months;
+}
+function populateMonthFilter(selectId) {
+  const months = buildUnifiedMonths_();
   const keys = Object.keys(months).sort().reverse();
   const el = document.getElementById(selectId);
   el.innerHTML = '<option value="">All months</option>' + keys.map(function(k) {
@@ -443,9 +463,9 @@ function renderFull() {
 }
 
 /* ---------- wire up ---------- */
-populateMonthFilter('monthFilterBoard', MOM, 'Month cosumption');
-populateMonthFilter('monthFilterPending', PEND, 'Invoice Date');
-populateMonthFilter('monthFilterFull', MOM, 'Month cosumption');
+populateMonthFilter('monthFilterBoard');
+populateMonthFilter('monthFilterPending');
+populateMonthFilter('monthFilterFull');
 
 document.getElementById('searchBoard').addEventListener('input', renderBoard);
 document.getElementById('monthFilterBoard').addEventListener('change', renderBoard);
