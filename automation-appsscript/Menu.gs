@@ -7,6 +7,7 @@ function onOpen() {
     .createMenu('Invoice Automation')
     .addItem('1. Setup tracker (first time only)', 'setupTracker')
     .addItem('2. Import manual tracker backfill (first time only)', 'importManualTrackerBackfill')
+    .addItem('3. Import comprehensive tracker (first time only)', 'importComprehensiveTracker')
     .addSeparator()
     .addItem('Run historical backfill (Gmail + Slack)', 'runBackfill')
     .addItem('Run incremental sync', 'runSync')

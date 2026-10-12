@@ -6,29 +6,33 @@
  * Re-running "Deploy > New deployment" after editing this file creates a
  * NEW url. To update the SAME url after an edit, use "Manage deployments"
  * > pencil icon > Version: New version > Deploy instead.
+ *
+ * Reads from the comprehensive tracker tabs (Month-on-Month Invoice
+ * Tracker, All Pendency, Vendor Master) -- run importComprehensiveTracker()
+ * first if those don't exist yet. These are separate from, and this
+ * dashboard no longer reads, the Gmail/Slack automation's Invoice
+ * Register/Source Inbox/Activity Log/Review Queue tabs.
  */
 function doGet(e) {
-  // Simplified dashboard only needs these two — Source Inbox (1000+ rows),
-  // Vendor Reference, and Review Queue aren't rendered as their own tabs
-  // anymore, so there's no point paying to fetch/serialize them here.
   var data = {
     generatedAt: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd MMM yyyy, HH:mm'),
-    invoiceRegister: readSheetAsObjects_('Invoice Register'),
-    activityLog: readSheetAsObjects_('Activity Log'),
+    monthOnMonth: readSheetAsObjects_('Month-on-Month Invoice Tracker'),
+    allPendency: readSheetAsObjects_('All Pendency'),
+    vendorMaster: readSheetAsObjects_('Vendor Master'),
   };
 
   var template = HtmlService.createTemplateFromFile('Dashboard');
   template.dataJson = JSON.stringify(data);
   return template.evaluate()
-    .setTitle('Invoice Automation Dashboard')
+    .setTitle('Tech Invoice Tracker')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 /**
- * Reads every data row of a tracker sheet into an array of plain objects
- * keyed by column header. Dates are formatted as yyyy-MM-dd strings (so
- * they serialize cleanly to JSON and sort correctly as text); everything
- * else passes through as-is.
+ * Reads every data row of a sheet into an array of plain objects keyed by
+ * column header. Dates are formatted as yyyy-MM-dd strings (so they
+ * serialize cleanly to JSON and sort correctly as text); everything else
+ * passes through as-is.
  */
 function readSheetAsObjects_(sheetName) {
   var ws = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);

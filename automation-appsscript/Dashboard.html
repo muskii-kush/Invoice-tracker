@@ -1,9 +1,20 @@
+<!--
+  Design plan (UI/tool treatment, not editorial — per artifact-design skill):
+  reuses the color/type system already established for CARS24's invoice
+  tooling (indigo/mint header, --blue/--mint/--amber/--red/--green
+  semantics) rather than inventing a new identity. Craft goes into
+  information design: month filtering, status normalization across messy
+  real-world status strings, dense but scannable tables. Live version of
+  the artifact built for the uploaded Tech Invoice Tracker — reads
+  straight from the Month-on-Month Invoice Tracker / All Pendency /
+  Vendor Master sheets each time this page loads.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invoice Status Board</title>
+<title>Tech Invoice Tracker — CARS24</title>
 <style>
 :root {
   --blue:#4736FE; --blue-dark:#2B2098; --blue-light:#E3E1FF;
@@ -12,14 +23,17 @@
   --grey-50:#F5F7FB; --grey-100:#EAECF2; --grey-200:#D4D9E8;
   --grey-500:#7B83A0; --grey-700:#3D4260;
   --ink:#1A2238; --sub:#4D5876; --mut:#8390AA;
-  --green:#00B37E; --amber:#D97706; --red:#DC2626;
+  --green:#00B37E; --green-bg:#D1FAE5; --green-fg:#065F46;
+  --amber:#D97706; --amber-bg:#FEF3C7; --amber-fg:#92400E;
+  --red:#DC2626; --red-bg:#FDE2E7; --red-fg:#9F1239;
+  --blue-bg:#E3E1FF; --blue-fg:#2B2098;
+  --grey-bg:#EAECF2; --grey-fg:#3D4260;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,Arial,sans-serif;background:var(--grey-50);color:var(--ink);line-height:1.5;font-size:14px;}
 a{color:var(--blue);}
 
-/* HEADER */
 .main-header{background:linear-gradient(140deg,#080524 0%,#1a0e7a 45%,#3326c8 100%);padding:36px 40px 28px;color:#fff;}
 .header-eyebrow{font-size:12px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
 .header-title{font-size:30px;font-weight:900;letter-spacing:-.04em;line-height:1.1;}
@@ -27,48 +41,55 @@ a{color:var(--blue);}
 .header-meta{margin-top:10px;font-size:11.5px;color:rgba(255,255,255,.55);}
 .header-meta b{color:rgba(255,255,255,.9);}
 
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;margin-top:22px;}
-.stat-box{background:rgba(255,255,255,.04);padding:16px 20px;}
-.stat-box .sv{font-size:24px;font-weight:900;color:var(--mint);letter-spacing:-.02em;}
-.stat-box .sl{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;}
-@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;margin-top:22px;}
+.stat-box{background:rgba(255,255,255,.04);padding:16px 18px;}
+.stat-box .sv{font-size:22px;font-weight:900;color:var(--mint);letter-spacing:-.02em;}
+.stat-box .sl{font-size:10.5px;color:rgba(255,255,255,.6);margin-top:4px;}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 
-/* TABS */
-.tab-bar{position:sticky;top:0;z-index:110;background:#0d0830;display:flex;gap:0;padding:0 28px;box-shadow:0 2px 10px rgba(0,0,0,.15);}
-.tab-btn{background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.55);font-family:inherit;font-size:13.5px;font-weight:800;letter-spacing:.02em;padding:15px 22px;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab-bar{position:sticky;top:0;z-index:110;background:#0d0830;display:flex;gap:0;padding:0 28px;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+.tab-btn{background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.55);font-family:inherit;font-size:13px;font-weight:800;letter-spacing:.02em;padding:15px 20px;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;}
 .tab-btn:hover{color:rgba(255,255,255,.85);}
 .tab-btn.active{color:#fff;border-bottom-color:var(--mint);background:rgba(255,255,255,.04);}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
 
-.content{max-width:1400px;margin:0 auto;padding:26px 28px 70px;}
+.content{max-width:1500px;margin:0 auto;padding:26px 28px 70px;}
 
-/* CONTROLS */
-.controls-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
-.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--grey-200);border-radius:12px;padding:10px 16px;flex:1;min-width:240px;max-width:420px;}
+.sec-hdr{display:flex;align-items:center;gap:14px;margin:0 0 16px;flex-wrap:wrap;}
+.sec-hdr h2{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.sec-sub{font-size:12px;color:var(--sub);margin-left:auto;font-weight:500;}
+
+.controls-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--grey-200);border-radius:12px;padding:10px 16px;flex:1;min-width:220px;max-width:380px;}
 .search-bar input{border:none;outline:none;font-size:13.5px;width:100%;background:transparent;color:var(--ink);font-family:inherit;}
-.filter-chip{padding:8px 16px;border-radius:999px;font-size:12.5px;font-weight:700;border:1px solid var(--grey-200);background:#fff;color:var(--sub);cursor:pointer;white-space:nowrap;}
+.select-control{background:#fff;border:1px solid var(--grey-200);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--ink);font-family:inherit;cursor:pointer;}
+.filter-chip{padding:8px 15px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--grey-200);background:#fff;color:var(--sub);cursor:pointer;white-space:nowrap;}
 .filter-chip.active{background:var(--blue);color:#fff;border-color:var(--blue);}
-.count-note{font-size:12px;color:var(--mut);margin-bottom:12px;font-weight:600;}
+.count-note{font-size:11.5px;color:var(--mut);margin-bottom:10px;font-weight:600;}
 
-/* TABLE */
-.matrix-wrap{overflow-x:auto;background:#fff;border:1px solid var(--grey-200);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);margin-bottom:28px;}
-table.matrix{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px;}
-table.matrix th{background:var(--grey-50);text-align:left;padding:12px 16px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);border-bottom:2px solid var(--grey-200);white-space:nowrap;}
-table.matrix td{padding:12px 16px;border-bottom:1px solid var(--grey-100);color:var(--ink);line-height:1.5;vertical-align:top;}
+.matrix-wrap{overflow-x:auto;background:#fff;border:1px solid var(--grey-200);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);margin-bottom:28px;max-height:70vh;overflow-y:auto;}
+table.matrix{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;}
+table.matrix th{background:var(--grey-50);text-align:left;padding:11px 14px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);border-bottom:2px solid var(--grey-200);white-space:nowrap;position:sticky;top:0;z-index:5;}
+table.matrix td{padding:10px 14px;border-bottom:1px solid var(--grey-100);color:var(--ink);line-height:1.5;vertical-align:top;}
 table.matrix tr:last-child td{border-bottom:none;}
 table.matrix tr:hover{background:var(--grey-50);}
 table.matrix td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;}
 table.matrix td.nowrap{white-space:nowrap;}
-.cell-truncate{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;}
+.cell-truncate{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;}
 .empty-note{padding:50px 20px;text-align:center;color:var(--mut);font-size:13.5px;}
 .vendor-name{font-weight:800;}
-.reason-text{color:var(--sub);}
-.reason-text.muted{color:var(--mut);font-style:italic;}
-.next-step{color:var(--blue-dark);font-weight:600;}
 
-/* STATUS PILLS */
-.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.01em;white-space:nowrap;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.01em;white-space:nowrap;}
+
+.pod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+.pod-card{background:#fff;border-radius:14px;border:1px solid var(--grey-200);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.pch{padding:14px 18px 12px;border-bottom:1px solid var(--grey-100);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.pch .pname{font-size:14.5px;font-weight:800;letter-spacing:-.01em;margin-bottom:2px;}
+.pch .powns{font-size:11px;color:var(--mut);font-weight:600;}
+.pcb-body{padding:12px 18px 16px;}
+.pcb-row{font-size:11.5px;color:var(--sub);line-height:1.6;margin-bottom:6px;}
+.pcb-row b{color:var(--ink);}
 
 .footer{text-align:center;padding:26px;color:var(--mut);font-size:11.5px;border-top:1px solid var(--grey-200);margin-top:16px;}
 </style>
@@ -77,51 +98,81 @@ table.matrix td.nowrap{white-space:nowrap;}
 
 <header class="main-header">
   <div class="header-eyebrow">CARS24 — Technology Vendor Invoices</div>
-  <div class="header-title">Invoice <span class="hi">Status Board</span></div>
-  <div class="header-meta">Updated <b id="metaGeneratedAt">—</b> &nbsp;·&nbsp; Source: Gmail automated intake</div>
+  <div class="header-title">Tech Invoice <span class="hi">Tracker</span></div>
+  <div class="header-meta">Data as of: <b id="metaGeneratedAt">—</b> &nbsp;·&nbsp; Live from the tracker sheet</div>
   <div class="stats-grid" id="statsGrid"></div>
 </header>
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="showTab('board', event)">📋 Status Board</button>
-  <button class="tab-btn" onclick="showTab('details', event)">🔍 Full Details</button>
+  <button class="tab-btn" onclick="showTab('pending', event)">⏳ Pending Invoices &amp; Cases</button>
+  <button class="tab-btn" onclick="showTab('vendors', event)">🏢 Vendor Master</button>
+  <button class="tab-btn" onclick="showTab('full', event)">🔍 Full Details</button>
 </div>
 
 <div class="content">
 
   <!-- STATUS BOARD -->
   <div id="panel-board" class="tab-panel active">
+    <div class="sec-hdr"><h2>This Month's Invoices</h2><span class="sec-sub">From the Month-on-Month Invoice Tracker</span></div>
     <div class="controls-row">
-      <div class="search-bar">
-        <span style="color:var(--blue);font-weight:800;">⌕</span>
-        <input type="text" id="searchBoard" placeholder="Search vendor, invoice number...">
-      </div>
-      <button class="filter-chip active" id="filterAll" onclick="setFilter('all')">All</button>
-      <button class="filter-chip" id="filterAttention" onclick="setFilter('attention')">⚠ Needs Attention</button>
-      <button class="filter-chip" id="filterPaid" onclick="setFilter('paid')">✓ Paid</button>
+      <div class="search-bar"><span style="color:var(--blue);font-weight:800;">⌕</span><input type="text" id="searchBoard" placeholder="Search vendor, invoice number..."></div>
+      <select class="select-control" id="monthFilterBoard"></select>
+      <button class="filter-chip active" id="boardFilterAll" onclick="setBoardFilter('all')">All</button>
+      <button class="filter-chip" id="boardFilterAttention" onclick="setBoardFilter('attention')">⚠ Needs Attention</button>
+      <button class="filter-chip" id="boardFilterPaid" onclick="setBoardFilter('paid')">✓ Paid / Released</button>
     </div>
     <div class="count-note" id="countBoard"></div>
     <div class="matrix-wrap"><div id="tableBoard"></div></div>
   </div>
 
-  <!-- FULL DETAILS -->
-  <div id="panel-details" class="tab-panel">
+  <!-- PENDING -->
+  <div id="panel-pending" class="tab-panel">
+    <div class="sec-hdr"><h2>Pending Invoices &amp; Cases</h2><span class="sec-sub">From the All Pendency log</span></div>
     <div class="controls-row">
-      <div class="search-bar">
-        <span style="color:var(--blue);font-weight:800;">⌕</span>
-        <input type="text" id="searchDetails" placeholder="Search any field...">
-      </div>
+      <div class="search-bar"><span style="color:var(--blue);font-weight:800;">⌕</span><input type="text" id="searchPending" placeholder="Search vendor, invoice number, PO..."></div>
+      <select class="select-control" id="monthFilterPending"></select>
+      <button class="filter-chip active" id="pendFilterAll" onclick="setPendFilter('all')">All</button>
+      <button class="filter-chip" id="pendFilterOpen" onclick="setPendFilter('open')">⚠ Still Open</button>
+      <button class="filter-chip" id="pendFilterPaid" onclick="setPendFilter('paid')">✓ Paid</button>
     </div>
-    <div class="count-note" id="countDetails"></div>
-    <div class="matrix-wrap"><div id="tableDetails"></div></div>
+    <div class="count-note" id="countPending"></div>
+    <div class="matrix-wrap"><div id="tablePending"></div></div>
+  </div>
+
+  <!-- VENDOR MASTER -->
+  <div id="panel-vendors" class="tab-panel">
+    <div class="sec-hdr"><h2>Vendor Master</h2><span class="sec-sub">Contacts, SPOCs, payment terms</span></div>
+    <div class="controls-row">
+      <div class="search-bar"><span style="color:var(--blue);font-weight:800;">⌕</span><input type="text" id="searchVendors" placeholder="Search vendor, SPOC, category..."></div>
+      <button class="filter-chip active" id="vendFilterAll" onclick="setVendFilter('all')">All</button>
+      <button class="filter-chip" id="vendFilterActive" onclick="setVendFilter('active')">Active</button>
+      <button class="filter-chip" id="vendFilterInactive" onclick="setVendFilter('inactive')">Inactive</button>
+    </div>
+    <div class="count-note" id="countVendors"></div>
+    <div class="pod-grid" id="vendorGrid"></div>
+  </div>
+
+  <!-- FULL DETAILS -->
+  <div id="panel-full" class="tab-panel">
+    <div class="sec-hdr"><h2>Full Details — Month-on-Month Invoice Tracker</h2><span class="sec-sub">Every column, unfiltered view</span></div>
+    <div class="controls-row">
+      <div class="search-bar"><span style="color:var(--blue);font-weight:800;">⌕</span><input type="text" id="searchFull" placeholder="Search any field..."></div>
+      <select class="select-control" id="monthFilterFull"></select>
+    </div>
+    <div class="count-note" id="countFull"></div>
+    <div class="matrix-wrap"><div id="tableFull"></div></div>
   </div>
 
 </div>
 
-<div class="footer">Invoice Status Board &nbsp;·&nbsp; CARS24 Tech &amp; AI Strategy &nbsp;·&nbsp; Auto-generated from the live tracker sheet</div>
+<div class="footer">Tech Invoice Tracker &nbsp;·&nbsp; CARS24 Tech &amp; AI Strategy &nbsp;·&nbsp; Reads live from the Month-on-Month Invoice Tracker / All Pendency / Vendor Master sheets</div>
 
 <script>
 const DATA = <?!= dataJson ?>;
+const MOM = DATA.monthOnMonth;
+const PEND = DATA.allPendency;
+const VENDORS = DATA.vendorMaster;
 
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -135,200 +186,280 @@ function showTab(name, evt) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ================= plain-English status derivation ================= */
-// Ordered worst-first so sorting by rank surfaces problems before "Paid".
-const STATUS_RULES = [
-  { test: r => r['P2P Status'] === 'Rejected', label: 'Rejected', color: { bg: '#FDE2E7', fg: '#9F1239' } },
-  { test: r => r['P2P Status'] === 'Validation issue', label: 'Blocked — Validation Issue', color: { bg: '#FDE2E7', fg: '#9F1239' } },
-  { test: r => ['Needs review', 'Missing information'].indexOf(r['Intake Status']) !== -1, label: 'Needs Info', color: { bg: '#FEF3C7', fg: '#92400E' } },
-  { test: r => r['P2P Status'] === 'Approval pending', label: 'Awaiting Approval', color: { bg: '#FEF3C7', fg: '#92400E' } },
-  { test: r => ['Submitted to P2P', 'Approved', 'Processed'].indexOf(r['P2P Status']) !== -1, label: 'In Process', color: { bg: '#E3E1FF', fg: '#2B2098' } },
-  { test: r => r['Intake Status'] === 'Confirmed invoice' && r['P2P Status'] === 'Not submitted', label: 'Ready — Not Yet Submitted', color: { bg: '#E3E1FF', fg: '#2B2098' } },
-  { test: r => r['P2P Status'] === 'Paid', label: 'Paid', color: { bg: '#D1FAE5', fg: '#065F46' } },
-  { test: r => ['Not an invoice', 'Duplicate'].indexOf(r['Intake Status']) !== -1, label: 'Not Applicable', color: { bg: '#EAECF2', fg: '#3D4260' } },
-];
-const SUGGESTED_NEXT_STEP = {
-  'Rejected': 'Review rejection reason with vendor/finance, resubmit or close out',
-  'Blocked — Validation Issue': 'Resolve the validation issue (GST/amount/PO mismatch) with finance',
-  'Needs Info': 'Open the source email and fill in the missing invoice number/amount',
-  'Awaiting Approval': 'Follow up with the approver',
-  'In Process': 'No action — tracking through P2P',
-  'Ready — Not Yet Submitted': 'Submit to P2P/Aerchain',
-  'Paid': 'None — closed',
-  'Not Applicable': '—',
-};
-function computeStatus(row) {
-  for (var i = 0; i < STATUS_RULES.length; i++) {
-    if (STATUS_RULES[i].test(row)) return { label: STATUS_RULES[i].label, color: STATUS_RULES[i].color, rank: i };
+/* ---------- status normalization: this data has messy real-world status strings
+   ("Amount released" / "Amount Released" / "Amount  released" with a double
+   space) — classify into a semantic bucket for the pill color, but always
+   display the ORIGINAL text in the table so nothing gets silently changed. */
+function classifyStatus(raw) {
+  const s = String(raw || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!s || s === '-') return { bucket: 'Unknown', bg: 'var(--grey-bg)', fg: 'var(--grey-fg)' };
+  if (s.includes('wrong') || s.includes('incorrect') || (s.includes('not') && s.includes('valid'))) {
+    return { bucket: 'Issue', bg: 'var(--red-bg)', fg: 'var(--red-fg)' };
   }
-  return { label: row['Intake Status'] || 'Unknown', color: { bg: '#EAECF2', fg: '#3D4260' }, rank: STATUS_RULES.length };
+  if (s.includes('paid') || s.includes('released') || s.includes('accounted') || s.includes('done')) {
+    return { bucket: 'Done', bg: 'var(--green-bg)', fg: 'var(--green-fg)' };
+  }
+  if (s.includes('approval') || s.includes('pending') || s.includes('need')) {
+    return { bucket: 'Pending', bg: 'var(--amber-bg)', fg: 'var(--amber-fg)' };
+  }
+  if (s.includes('raised') || s.includes('upload') || s.includes('confirmation')) {
+    return { bucket: 'In Progress', bg: 'var(--blue-bg)', fg: 'var(--blue-fg)' };
+  }
+  return { bucket: 'Other', bg: 'var(--grey-bg)', fg: 'var(--grey-fg)' };
 }
-function statusPill(status) {
-  return '<span class="pill" style="background:' + status.color.bg + ';color:' + status.color.fg + ';">' + esc(status.label) + '</span>';
+function pill(raw) {
+  if (!raw) return '';
+  const c = classifyStatus(raw);
+  return '<span class="pill" title="' + esc(raw) + '" style="background:' + c.bg + ';color:' + c.fg + ';">' + esc(raw) + '</span>';
 }
-
-/* Latest Activity Log entry per Invoice ID — this is "what happened on the thread" */
-function buildLatestActivityMap(activityLog) {
-  const map = {};
-  activityLog.forEach(function(a) {
-    const id = a['Invoice ID'];
-    if (!id) return;
-    const existing = map[id];
-    if (!existing || String(a['Activity Date'] || '') >= String(existing['Activity Date'] || '')) {
-      map[id] = a;
-    }
+function statusRank(raw) {
+  const b = classifyStatus(raw).bucket;
+  return { 'Issue': 0, 'Pending': 1, 'Other': 2, 'In Progress': 3, 'Unknown': 4, 'Done': 5 }[b];
+}
+function fmtAmount(v) {
+  return typeof v === 'number' ? v.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '';
+}
+function monthLabel(dateStr) {
+  if (!dateStr) return null;
+  const m = String(dateStr).match(/^(\d{4})-(\d{2})/);
+  if (!m) return null;
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return names[Number(m[2]) - 1] + ' ' + m[1];
+}
+function monthKey(dateStr) {
+  const m = String(dateStr || '').match(/^(\d{4})-(\d{2})/);
+  return m ? m[1] + '-' + m[2] : null;
+}
+function populateMonthFilter(selectId, rows, dateField) {
+  const months = {};
+  rows.forEach(function(r) {
+    const k = monthKey(r[dateField]);
+    if (k) months[k] = monthLabel(r[dateField]);
   });
-  return map;
-}
-const LATEST_ACTIVITY = buildLatestActivityMap(DATA.activityLog || []);
-
-function reasonFor(row) {
-  const activity = LATEST_ACTIVITY[row['Invoice ID']];
-  if (activity && activity['Details']) return { text: activity['Details'], muted: false };
-  if (row['Current Issue']) return { text: row['Current Issue'], muted: false };
-  if (row['Remarks']) return { text: row['Remarks'], muted: false };
-  return { text: 'No updates logged yet', muted: true };
-}
-function nextStepFor(row, status) {
-  if (row['Next Action']) return row['Next Action'];
-  return SUGGESTED_NEXT_STEP[status.label] || '—';
+  const keys = Object.keys(months).sort().reverse();
+  const el = document.getElementById(selectId);
+  el.innerHTML = '<option value="">All months</option>' + keys.map(function(k) {
+    return '<option value="' + k + '">' + months[k] + '</option>';
+  }).join('');
 }
 
-/* ================= enrich every invoice once ================= */
-const BOARD_ROWS = (DATA.invoiceRegister || []).map(function(row) {
-  const status = computeStatus(row);
-  const reason = reasonFor(row);
-  return {
-    row: row,
-    vendor: row['Vendor'] || '(Unknown vendor)',
-    invoiceNumber: row['Invoice Number'] || row['PO Number'] || row['PR Number'] || '(no reference)',
-    amount: row['Invoice Amount'],
-    currency: row['Currency'] || '',
-    status: status,
-    reasonText: reason.text,
-    reasonMuted: reason.muted,
-    nextStep: nextStepFor(row, status),
-    updated: row['Last Updated Date'] || row['Created Date'] || '',
-    sourceLink: row['Source Message Link'] || '',
-  };
-});
-
-/* ================= stats header ================= */
+/* ---------- stats header ---------- */
 function renderStats() {
-  const total = BOARD_ROWS.length;
-  const paid = BOARD_ROWS.filter(function(r){ return r.status.label === 'Paid'; }).length;
-  const attention = BOARD_ROWS.filter(function(r){ return r.status.rank <= 3; }).length;
-  const outstanding = BOARD_ROWS
-    .filter(function(r){ return r.status.label !== 'Paid' && r.status.label !== 'Not Applicable'; })
-    .reduce(function(sum, r){ return sum + (typeof r.amount === 'number' ? r.amount : 0); }, 0);
+  document.getElementById('metaGeneratedAt').textContent = DATA.generatedAt;
+  const totalInvoices = MOM.length;
+  const paidThisMonth = MOM.filter(function(r){ return classifyStatus(r['Current Status']).bucket === 'Done'; }).length;
+  const pendingOpen = PEND.filter(function(r){ return classifyStatus(r['Current Status']).bucket !== 'Done'; }).length;
+  const totalVendors = VENDORS.length;
+  const totalOutstanding = PEND
+    .filter(function(r){ return classifyStatus(r['Current Status']).bucket !== 'Done'; })
+    .reduce(function(sum, r){ return sum + (typeof r['Amount'] === 'number' ? r['Amount'] : 0); }, 0);
 
   const stats = [
-    [total, 'Total invoices'],
-    [paid, 'Paid'],
-    [attention, 'Needs attention'],
-    ['₹' + Math.round(outstanding).toLocaleString('en-IN'), 'Outstanding amount'],
+    [totalInvoices, 'Invoices this month'],
+    [paidThisMonth, 'Paid / released this month'],
+    [pendingOpen, 'Open pending cases (all-time)'],
+    ['₹' + Math.round(totalOutstanding).toLocaleString('en-IN'), 'Outstanding (open cases)'],
+    [totalVendors, 'Vendors tracked'],
   ];
   document.getElementById('statsGrid').innerHTML = stats.map(function(s) {
     return '<div class="stat-box"><div class="sv">' + s[0] + '</div><div class="sl">' + s[1] + '</div></div>';
   }).join('');
-  document.getElementById('metaGeneratedAt').textContent = DATA.generatedAt;
 }
 
-/* ================= Status Board tab ================= */
-let currentFilter = 'all';
-function setFilter(f) {
-  currentFilter = f;
-  ['All', 'Attention', 'Paid'].forEach(function(name) {
-    document.getElementById('filter' + name).classList.toggle('active', name.toLowerCase() === f);
-  });
-  renderBoard();
-}
-function boardMatchesSearch(item, q) {
-  if (!q) return true;
-  const hay = (item.vendor + ' ' + item.invoiceNumber + ' ' + item.reasonText).toLowerCase();
-  return hay.indexOf(q) !== -1;
-}
-function renderBoard() {
-  const q = document.getElementById('searchBoard').value.trim().toLowerCase();
-  let items = BOARD_ROWS.filter(function(item) { return boardMatchesSearch(item, q); });
-  if (currentFilter === 'attention') items = items.filter(function(i){ return i.status.rank <= 3; });
-  if (currentFilter === 'paid') items = items.filter(function(i){ return i.status.label === 'Paid'; });
-
-  items = items.slice().sort(function(a, b) {
-    if (a.status.rank !== b.status.rank) return a.status.rank - b.status.rank;
-    return (Number(b.amount) || 0) - (Number(a.amount) || 0);
-  });
-
-  document.getElementById('countBoard').textContent = 'Showing ' + items.length + ' of ' + BOARD_ROWS.length + ' invoices';
-
-  if (!items.length) {
-    document.getElementById('tableBoard').innerHTML = '<div class="empty-note">Nothing matches.</div>';
-    return;
-  }
-
-  let html = '<table class="matrix"><tr>'
-    + '<th>Vendor</th><th>Invoice / Ref</th><th>Amount</th><th>Status</th>'
-    + "<th>What's Happening</th><th>Next Step</th><th>Updated</th></tr>";
-  items.forEach(function(item) {
-    const amountText = typeof item.amount === 'number'
-      ? item.currency + ' ' + item.amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })
-      : '';
-    html += '<tr>'
-      + '<td class="vendor-name nowrap">' + esc(item.vendor) + '</td>'
-      + '<td class="nowrap">' + esc(item.invoiceNumber) + '</td>'
-      + '<td class="num">' + esc(amountText) + '</td>'
-      + '<td>' + statusPill(item.status) + '</td>'
-      + '<td><span class="reason-text' + (item.reasonMuted ? ' muted' : '') + ' cell-truncate" title="' + esc(item.reasonText) + '">' + esc(item.reasonText) + '</span></td>'
-      + '<td class="next-step">' + esc(item.nextStep) + '</td>'
-      + '<td class="nowrap">' + esc(item.updated) + '</td>'
-      + '</tr>';
-  });
-  html += '</table>';
-  document.getElementById('tableBoard').innerHTML = html;
-}
-
-/* ================= Full Details tab ================= */
-const DETAIL_COLUMNS = [
-  'Invoice ID', 'Vendor', 'Service', 'Business Unit', 'Invoice Number', 'Invoice Date',
-  'Invoice Amount', 'Currency', 'Due Date', 'PO Number', 'PR Number', 'P2P / Aerchain Link',
-  'Vendor SPOC', 'Intake Status', 'P2P Status', 'Current Issue', 'Source Message Link', 'Remarks',
-];
-function detailsMatchesSearch(row, q) {
-  if (!q) return true;
-  return DETAIL_COLUMNS.some(function(c) { return String(row[c] || '').toLowerCase().indexOf(q) !== -1; });
-}
-function renderDetails() {
-  const q = document.getElementById('searchDetails').value.trim().toLowerCase();
-  const rows = (DATA.invoiceRegister || []).filter(function(r) { return detailsMatchesSearch(r, q); });
-  document.getElementById('countDetails').textContent = 'Showing ' + rows.length + ' of ' + (DATA.invoiceRegister || []).length + ' invoices';
-
+/* ---------- generic table renderer ---------- */
+function renderTable(containerId, rows, columns, formatters) {
   if (!rows.length) {
-    document.getElementById('tableDetails').innerHTML = '<div class="empty-note">Nothing matches.</div>';
+    document.getElementById(containerId).innerHTML = '<div class="empty-note">Nothing matches.</div>';
     return;
   }
-  let html = '<table class="matrix"><tr>' + DETAIL_COLUMNS.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
+  let html = '<table class="matrix"><tr>' + columns.map(function(c){ return '<th>' + esc(c.label) + '</th>'; }).join('') + '</tr>';
   rows.forEach(function(row) {
-    html += '<tr>' + DETAIL_COLUMNS.map(function(c) {
-      const v = row[c];
-      if (c === 'Source Message Link' || c === 'P2P / Aerchain Link') {
-        return '<td>' + (v ? '<a href="' + esc(v) + '" target="_blank" rel="noopener">Open ↗</a>' : '') + '</td>';
-      }
-      if (c === 'Invoice Amount' && typeof v === 'number') {
-        return '<td class="num">' + v.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</td>';
-      }
-      return '<td><span class="cell-truncate" title="' + esc(v) + '">' + esc(v) + '</span></td>';
+    html += '<tr>' + columns.map(function(c) {
+      const raw = row[c.key];
+      const content = (formatters && formatters[c.key]) ? formatters[c.key](raw, row) : esc(raw);
+      return '<td class="' + (c.cls || '') + '">' + content + '</td>';
     }).join('') + '</tr>';
   });
   html += '</table>';
-  document.getElementById('tableDetails').innerHTML = html;
+  document.getElementById(containerId).innerHTML = html;
+}
+function truncCell(text) {
+  return '<span class="cell-truncate" title="' + esc(text) + '">' + esc(text) + '</span>';
 }
 
+/* ================= STATUS BOARD (Month-on-Month) ================= */
+const BOARD_COLUMNS = [
+  { key: 'Vendor Name', label: 'Vendor', cls: 'nowrap vendor-name' },
+  { key: 'Invoice Number', label: 'Invoice #', cls: 'nowrap' },
+  { key: 'Invoice Value', label: 'Amount', cls: 'num' },
+  { key: 'Invoice Date', label: 'Invoice Date', cls: 'nowrap' },
+  { key: 'Billing Due Date', label: 'Due Date', cls: 'nowrap' },
+  { key: 'Current Status', label: 'Status' },
+  { key: 'Payment Release Status', label: 'Payment Status' },
+  { key: 'Tech Invoice SPOC', label: 'SPOC', cls: 'nowrap' },
+  { key: 'PR/PO Number', label: 'PO/PR #', cls: 'nowrap' },
+  { key: 'Remarks', label: 'Remarks' },
+];
+const BOARD_FORMATTERS = {
+  'Invoice Value': function(v) { return fmtAmount(v); },
+  'Current Status': function(v) { return pill(v); },
+  'Payment Release Status': function(v) { return pill(v); },
+  'Remarks': function(v) { return truncCell(v); },
+};
+let boardFilter = 'all';
+function setBoardFilter(f) {
+  boardFilter = f;
+  ['All', 'Attention', 'Paid'].forEach(function(n) { document.getElementById('boardFilter' + n).classList.toggle('active', n.toLowerCase() === f); });
+  renderBoard();
+}
+function renderBoard() {
+  const q = document.getElementById('searchBoard').value.trim().toLowerCase();
+  const month = document.getElementById('monthFilterBoard').value;
+  let rows = MOM.filter(function(r) {
+    if (month && monthKey(r['Month cosumption']) !== month) return false;
+    if (!q) return true;
+    const hay = (r['Vendor Name'] + ' ' + r['Invoice Number'] + ' ' + (r['Remarks'] || '')).toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  if (boardFilter === 'attention') rows = rows.filter(function(r){ return classifyStatus(r['Current Status']).bucket !== 'Done'; });
+  if (boardFilter === 'paid') rows = rows.filter(function(r){ return classifyStatus(r['Current Status']).bucket === 'Done'; });
+  rows = rows.slice().sort(function(a, b) {
+    const d = statusRank(a['Current Status']) - statusRank(b['Current Status']);
+    if (d !== 0) return d;
+    return (Number(b['Invoice Value']) || 0) - (Number(a['Invoice Value']) || 0);
+  });
+  document.getElementById('countBoard').textContent = 'Showing ' + rows.length + ' of ' + MOM.length + ' invoices';
+  renderTable('tableBoard', rows, BOARD_COLUMNS, BOARD_FORMATTERS);
+}
+
+/* ================= PENDING INVOICES & CASES ================= */
+const PEND_COLUMNS = [
+  { key: 'Vendor Name', label: 'Vendor', cls: 'nowrap vendor-name' },
+  { key: 'Invoice No', label: 'Invoice #', cls: 'nowrap' },
+  { key: 'PO', label: 'PO/PR', cls: 'nowrap' },
+  { key: 'Amount', label: 'Amount', cls: 'num' },
+  { key: 'Invoice Date', label: 'Invoice Date', cls: 'nowrap' },
+  { key: 'Current Status', label: 'Status' },
+  { key: 'Validation', label: 'Validation' },
+  { key: 'Owner of Service', label: 'Owner', cls: 'nowrap' },
+  { key: 'Procurement SPOC', label: 'Procurement SPOC', cls: 'nowrap' },
+  { key: 'Payment TAT', label: 'Payment TAT', cls: 'nowrap' },
+  { key: 'Entity', label: 'Entity', cls: 'nowrap' },
+];
+const PEND_FORMATTERS = {
+  'Amount': function(v) { return fmtAmount(v); },
+  'Current Status': function(v) { return pill(v); },
+  'Validation': function(v) { return pill(v); },
+  'Owner of Service': function(v) { return truncCell(v); },
+};
+let pendFilter = 'all';
+function setPendFilter(f) {
+  pendFilter = f;
+  ['All', 'Open', 'Paid'].forEach(function(n) { document.getElementById('pendFilter' + n).classList.toggle('active', n.toLowerCase() === f); });
+  renderPending();
+}
+function renderPending() {
+  const q = document.getElementById('searchPending').value.trim().toLowerCase();
+  const month = document.getElementById('monthFilterPending').value;
+  let rows = PEND.filter(function(r) {
+    if (month && monthKey(r['Invoice Date']) !== month) return false;
+    if (!q) return true;
+    const hay = (r['Vendor Name'] + ' ' + r['Invoice No'] + ' ' + (r['PO'] || '')).toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  if (pendFilter === 'open') rows = rows.filter(function(r){ return classifyStatus(r['Current Status']).bucket !== 'Done'; });
+  if (pendFilter === 'paid') rows = rows.filter(function(r){ return classifyStatus(r['Current Status']).bucket === 'Done'; });
+  rows = rows.slice().sort(function(a, b) {
+    const d = statusRank(a['Current Status']) - statusRank(b['Current Status']);
+    if (d !== 0) return d;
+    return String(b['Invoice Date'] || '').localeCompare(String(a['Invoice Date'] || ''));
+  });
+  document.getElementById('countPending').textContent = 'Showing ' + rows.length + ' of ' + PEND.length + ' cases';
+  renderTable('tablePending', rows, PEND_COLUMNS, PEND_FORMATTERS);
+}
+
+/* ================= VENDOR MASTER ================= */
+let vendFilter = 'all';
+function setVendFilter(f) {
+  vendFilter = f;
+  ['All', 'Active', 'Inactive'].forEach(function(n) { document.getElementById('vendFilter' + n).classList.toggle('active', n.toLowerCase() === f); });
+  renderVendors();
+}
+function renderVendors() {
+  const q = document.getElementById('searchVendors').value.trim().toLowerCase();
+  let rows = VENDORS.filter(function(v) {
+    if (vendFilter === 'active' && String(v['Service Status']).toLowerCase() !== 'active') return false;
+    if (vendFilter === 'inactive' && String(v['Service Status']).toLowerCase() !== 'inactive') return false;
+    if (!q) return true;
+    const hay = (v['Vendor Name'] + ' ' + v['Vendor SPOC'] + ' ' + v['Service / Category']).toLowerCase();
+    return hay.indexOf(q) !== -1;
+  });
+  document.getElementById('countVendors').textContent = 'Showing ' + rows.length + ' of ' + VENDORS.length + ' vendors';
+  const grid = document.getElementById('vendorGrid');
+  if (!rows.length) { grid.innerHTML = '<div class="empty-note">Nothing matches.</div>'; return; }
+  grid.innerHTML = rows.map(function(v) {
+    const statusPill = String(v['Service Status']).toLowerCase() === 'active'
+      ? '<span class="pill" style="background:var(--green-bg);color:var(--green-fg);">Active</span>'
+      : '<span class="pill" style="background:var(--grey-bg);color:var(--grey-fg);">Inactive</span>';
+    return '<div class="pod-card">'
+      + '<div class="pch"><div><div class="pname">' + esc(v['Vendor Name']) + '</div><div class="powns">' + esc(v['Service / Category'] || '') + '</div></div>' + statusPill + '</div>'
+      + '<div class="pcb-body">'
+      + (v['Vendor SPOC'] ? '<div class="pcb-row"><b>SPOC:</b> ' + esc(v['Vendor SPOC']) + (v['Vendor Email ID'] ? ' (' + esc(v['Vendor Email ID']) + ')' : '') + '</div>' : '')
+      + (v['Payment SPOC'] ? '<div class="pcb-row"><b>Payment SPOC:</b> ' + esc(v['Payment SPOC']) + '</div>' : '')
+      + (v['Service SPOC 1'] ? '<div class="pcb-row"><b>Service owners:</b> ' + esc(v['Service SPOC 1']) + (v['Service SPOC 2'] ? ', ' + esc(v['Service SPOC 2']) : '') + '</div>' : '')
+      + (v['Payment Terms'] ? '<div class="pcb-row"><b>Terms:</b> ' + esc(v['Payment Terms']) + ' · ' + esc(v['Billing Frequency'] || '') + '</div>' : '')
+      + (v['Invoice Submission Email'] ? '<div class="pcb-row"><b>Invoices to:</b> ' + esc(v['Invoice Submission Email']) + '</div>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+/* ================= FULL DETAILS ================= */
+const FULL_COLUMNS = ['Vendor Name', 'Month cosumption', 'Invoice Received Date', 'Invoice Number', 'Invoice Value',
+  'Invoice Date', 'Billing Due Date', 'PR/PO Raised Date', 'PO Released Date', 'Invoice Upload Date', 'PR/PO Number',
+  'Current Status', 'Type Of Transaction', 'Tech Invoice SPOC', 'Entity', 'Validation', 'Payment Release Status',
+  'Owner of Service', 'Active Service', 'Payment TAT', 'Billing Period', 'Remarks'];
+function renderFull() {
+  const q = document.getElementById('searchFull').value.trim().toLowerCase();
+  const month = document.getElementById('monthFilterFull').value;
+  const rows = MOM.filter(function(r) {
+    if (month && monthKey(r['Month cosumption']) !== month) return false;
+    if (!q) return true;
+    return FULL_COLUMNS.some(function(c) { return String(r[c] || '').toLowerCase().indexOf(q) !== -1; });
+  });
+  document.getElementById('countFull').textContent = 'Showing ' + rows.length + ' of ' + MOM.length + ' invoices';
+  if (!rows.length) { document.getElementById('tableFull').innerHTML = '<div class="empty-note">Nothing matches.</div>'; return; }
+  let html = '<table class="matrix"><tr>' + FULL_COLUMNS.map(function(c){ return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
+  rows.forEach(function(row) {
+    html += '<tr>' + FULL_COLUMNS.map(function(c) {
+      let v = row[c];
+      if (c === 'Invoice Value') return '<td class="num">' + fmtAmount(v) + '</td>';
+      if (c === 'Current Status' || c === 'Payment Release Status' || c === 'Validation') return '<td>' + pill(v) + '</td>';
+      if (c === 'Remarks') return '<td>' + truncCell(v) + '</td>';
+      return '<td class="nowrap">' + esc(v) + '</td>';
+    }).join('') + '</tr>';
+  });
+  html += '</table>';
+  document.getElementById('tableFull').innerHTML = html;
+}
+
+/* ---------- wire up ---------- */
+populateMonthFilter('monthFilterBoard', MOM, 'Month cosumption');
+populateMonthFilter('monthFilterPending', PEND, 'Invoice Date');
+populateMonthFilter('monthFilterFull', MOM, 'Month cosumption');
+
 document.getElementById('searchBoard').addEventListener('input', renderBoard);
-document.getElementById('searchDetails').addEventListener('input', renderDetails);
+document.getElementById('monthFilterBoard').addEventListener('change', renderBoard);
+document.getElementById('searchPending').addEventListener('input', renderPending);
+document.getElementById('monthFilterPending').addEventListener('change', renderPending);
+document.getElementById('searchVendors').addEventListener('input', renderVendors);
+document.getElementById('searchFull').addEventListener('input', renderFull);
+document.getElementById('monthFilterFull').addEventListener('change', renderFull);
 
 renderStats();
 renderBoard();
-renderDetails();
+renderPending();
+renderVendors();
+renderFull();
 </script>
 
 </body>
